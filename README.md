@@ -2,65 +2,133 @@
 
 # Get Next Line
 
-## Description
+`get_next_line()` is a function that reads and returns **one line at a time** from a file descriptor. The project introduces one of the most important concepts in C programming: **static variables**, while reinforcing manual memory management, dynamic allocation, efficient string manipulation, and file descriptor handling.
 
-The goal of this project is to implement a function capable of reading a file descriptor one line at a time.
+---
 
-Unlike traditional file reading functions, `get_next_line()` remembers what has already been read through the use of a static variable, allowing consecutive calls to continue exactly where the previous one stopped.
+# Table of Contents
 
-The project introduces one of the most important concepts in C programming: **static variables**, while also reinforcing manual memory management, dynamic allocation, file descriptors, buffer handling and efficient string manipulation.
+- [Description](#description)
+- [Objectives](#objectives)
+- [Project Structure](#project-structure)
+- [Instructions](#instructions)
+- [How it Works](#how-it-works)
+- [Visual Flow](#visual-flow)
+- [Algorithm](#algorithm)
+- [Why use a static variable?](#why-use-a-static-variable)
+- [BUFFER_SIZE](#buffer_size)
+- [Complexity](#complexity)
+- [Example](#example)
+- [Resources](#resources)
+- [AI Usage](#ai-usage)
+- [Bonus](#bonus)
 
-## Objectives
+---
+
+# Description
+
+The goal of this project is to implement a function capable of reading a file descriptor **one line at a time**.
+
+Unlike traditional file reading functions, `get_next_line()` remembers what has already been read by using a **static variable**, allowing consecutive calls to continue exactly where the previous one stopped.
+
+The function works with both regular files and the standard input while minimizing unnecessary calls to `read()`.
+
+---
+
+# Objectives
 
 This project focuses on learning how to:
 
-- read from file descriptors using `read()`;
-- manage dynamic memory safely;
-- understand and use static variables;
-- manipulate strings manually;
-- avoid unnecessary reads;
-- correctly return one line at a time.
+- Read from file descriptors using `read()`;
+- Manage dynamic memory safely;
+- Understand and use static variables;
+- Manipulate strings manually;
+- Minimize unnecessary reads;
+- Return one complete line per function call;
+- Handle different `BUFFER_SIZE` values correctly.
 
-## Project Structure
+---
 
-get_next_line.c
+# Project Structure
+
+```text
+.
+├── get_next_line.c
+├── get_next_line.h
+├── get_next_line_utils.c
+│
+├── get_next_line_bonus.c
+├── get_next_line_bonus.h
+└── get_next_line_utils_bonus.c
+```
+
+---
+
+# Instructions
+
+## Compilation
+
+Compile the mandatory project using:
+
+```bash
+cc -Wall -Wextra -Werror -D BUFFER_SIZE=42 \
+get_next_line.c \
 get_next_line_utils.c
-get_next_line.h
+```
 
-Bonus:
+The project must also compile correctly with different buffer sizes, for example:
 
-get_next_line_bonus.c
-get_next_line_utils_bonus.c
-get_next_line_bonus.h
+```bash
+cc -Wall -Wextra -Werror -D BUFFER_SIZE=1
+```
 
-## How it works
+```bash
+cc -Wall -Wextra -Werror -D BUFFER_SIZE=9999
+```
 
-                get_next_line(fd)
-                       │
-                       ▼
-             Is there leftover data?
-                  │           │
-                 Yes         No
-                  │           │
-                  ▼           ▼
-          Append new reads from fd
-                  │
-                  ▼
-         Newline found?
-          │             │
-         Yes            No
-          │             │
-          ▼             ▼
-Return one line     Continue reading
-          │
-          ▼
-Save remaining data
-          │
-          ▼
- Wait for next function call
- 
-## Visual flow
+The implementation should behave correctly regardless of the chosen `BUFFER_SIZE`.
 
+---
+
+# How it Works
+
+```text
+                 get_next_line(fd)
+                        │
+                        ▼
+          Is there remaining data (stash)?
+                 │                 │
+                Yes               No
+                 │                 │
+                 └────────┬────────┘
+                          ▼
+                 Read from file (read)
+                          │
+                          ▼
+                 Append to stash
+                          │
+                          ▼
+                Newline found?
+                 │                 │
+                Yes               No
+                 │                 │
+                 ▼                 │
+          Extract one line         │
+                 │                 │
+                 ▼                 │
+      Save remaining characters    │
+                 │                 │
+                 ▼                 │
+          Return the line ◄────────┘
+```
+
+---
+
+# Visual Flow
+
+Example:
+
+```text
 File
 
 +--------------------------------------+
@@ -68,86 +136,127 @@ File
 +--------------------------------------+
 
 BUFFER_SIZE = 5
+```
 
+### First call
 
-Read #1
+```text
+read()
 
 Hello
 
-Return:
+Returned:
 
 Hello\n
 
+Remaining (stash):
 
-Remaining:
+How
+```
+
+---
+
+### Second call
+
+```text
+New read:
+
+ are you?\n42
+
+stash before:
 
 How
 
+stash after:
 
-Read #2
+How are you?\n42
+
+Returned:
 
 How are you?\n
-
-Return:
-
-How are you?\n
-
 
 Remaining:
 
-42\nBye
+42
+```
 
+---
 
-Read #3
+### Third call
+
+```text
+New read:
+
+\nBye
+
+Returned:
 
 42\n
 
-
 Remaining:
 
 Bye
+```
 
+---
 
-Read #4
+### Fourth call
+
+```text
+EOF reached
+
+Returned:
 
 Bye
 
+Remaining:
 
-EOF
+(empty)
+```
 
-Return:
+---
 
-Bye
+# Algorithm
 
+## Step 1 — Validate the input
 
-## Algorithm
+The function first verifies whether:
 
-### Step 1
+- the file descriptor is valid;
+- `BUFFER_SIZE` is greater than zero.
 
-The function starts by checking if the file descriptor is valid.
+If one of these conditions is not met, the function immediately returns `NULL`.
 
-If it is invalid, or if BUFFER_SIZE <= 0, the function immediately returns NULL.
+```c
+if (fd < 0 || BUFFER_SIZE <= 0)
+    return (NULL);
+```
 
-↓
+---
 
-### Step 2
+## Step 2 — Keep unread data
 
-A static string stores everything that has already been read but has not yet been returned.
+A static variable stores characters that have already been read but not yet returned.
 
+```c
 static char *stash;
+```
 
-The static variable allows the function to remember previous reads between calls.
+Because it is **static**, its value persists between function calls.
 
-↓
+---
 
-### Step 3
+## Step 3 — Read from the file
 
-The function reads from the file using
+The function reads up to `BUFFER_SIZE` bytes.
 
-read(fd, buffer, BUFFER_SIZE)
+```c
+read(fd, buffer, BUFFER_SIZE);
+```
 
-Each new buffer is concatenated to the existing stash.
+Each newly read buffer is appended to the existing stash.
 
+```text
 stash
 
 ↓
@@ -161,35 +270,41 @@ rld\nHow
 ↓
 
 Hello World\nHow
+```
 
-↓
+---
 
-### Step 4
+## Step 4 — Search for a newline
 
-Whenever a newline (\n) is found, the function extracts everything until that newline.
+Once a newline (`\n`) is found, everything before it becomes the next line to return.
 
+```text
 stash
 
 Hello World\nHow are
 
 ↓
 
-line
+Returned line
 
 Hello World\n
+```
 
-↓
+---
 
-### Step 5
+## Step 5 — Allocate memory
 
-The returned line is allocated with malloc().
+The extracted line is allocated dynamically using `malloc()`.
 
-↓
+The caller is responsible for freeing the returned memory.
 
-### Step 6
+---
 
-The remaining characters stay inside the static variable.
+## Step 6 — Save the remaining characters
 
+After extracting one line, the unused characters remain inside the static variable.
+
+```text
 Before
 
 Hello\nHow are you
@@ -205,51 +320,140 @@ Hello\n
 Saved
 
 How are you
+```
+
+---
+
+## Step 7 — Continue reading
+
+The next call to `get_next_line()` starts from the saved characters instead of rereading the file.
+
+This process repeats until the end of the file is reached.
+
+---
+
+# Why use a static variable?
+
+Without a static variable, every call to `get_next_line()` would lose all previously read data.
+
+The static variable allows the function to remember unread characters between calls, making it possible to continue reading exactly where the previous call stopped.
+
+This is the key concept introduced by this project.
+
+---
+
+# BUFFER_SIZE
+
+`BUFFER_SIZE` determines how many bytes are read during each call to `read()`.
+
+Small values result in:
+
+- more calls to `read()`;
+- less memory used per read.
+
+Large values result in:
+
+- fewer calls to `read()`;
+- more memory read at once.
+
+The implementation must work correctly regardless of the chosen value.
+
+---
+
+# Complexity
+
+| Operation | Complexity |
+|-----------|------------|
+| Time | **O(n)** |
+| Space | **O(n)** |
+
+Where **n** is the number of characters returned in the current line.
+
+---
+
+# Example
+
+```c
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include "get_next_line.h"
+
+int main(void)
+{
+    int fd;
+    char *line;
+
+    fd = open("text.txt", O_RDONLY);
+
+    if (fd < 0)
+        return (1);
+
+    while ((line = get_next_line(fd)))
+    {
+        printf("%s", line);
+        free(line);
+    }
+
+    close(fd);
+
+    return (0);
+}
+```
+
+---
+
+# Resources
+
+### Documentation
+
+- The C Programming Language — Brian W. Kernighan & Dennis M. Ritchie
+- Linux `read(2)` manual
+- Linux `malloc(3)` manual
+- Linux `free(3)` manual
+- Linux `open(2)` manual
+- 42 Project Subject
+
+---
+
+# AI Usage
+
+ChatGPT was used exclusively as a learning assistant to:
+
+- better understand static variables;
+- review algorithm ideas;
+- improve the project documentation;
+- clarify C programming concepts.
+
+All implementation, debugging, testing, and final code decisions were completed manually.
+
+---
+
+# Bonus
+
+The bonus version extends the project by supporting **multiple file descriptors simultaneously**.
+
+Instead of remembering the reading position for only one file descriptor, the implementation keeps track of each descriptor independently while still using static storage.
+
+Example:
+
+```text
+get_next_line(fd3)
+↓
+
+get_next_line(fd4)
+↓
+
+get_next_line(fd5)
+↓
+
+get_next_line(fd3)
 
 ↓
 
-### Step 7
+Reading continues correctly from fd3 without losing its previous state.
+```
 
-The next function call continues from the remaining data instead of rereading the file.
+This allows the function to alternate between different files without mixing their contents.
 
-## Why use a static variable?
-
-Without a static variable, every call to `get_next_line()` would lose all previously read information.
-
-The static variable preserves unread characters between function calls, allowing the function to continue exactly where it stopped.
-
-## Complexity
-
-Time Complexity:
-
-O(n)
-
-Space Complexity:
-
-O(n)
-
-where n is the length of the returned line.
-
-## Resources
-
-Documentation
-
-- The C Programming Language — Kernighan & Ritchie
-- Linux `read(2)` man page
-- Linux `open(2)` man page
-- Linux `malloc(3)` man page
-- 42 Subject
-
-AI Usage
-
-ChatGPT was used only as a learning assistant for:
-- understanding static variables;
-- reviewing algorithm ideas;
-- improving documentation;
-- clarifying C concepts.
-
-All implementation, debugging and final code decisions were completed manually.
-
-## Bonus
-
-The bonus version extends the project by allowing multiple file descriptors to be handled simultaneously while still using a static variable.
+---
