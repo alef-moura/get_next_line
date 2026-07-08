@@ -457,3 +457,14 @@ Reading continues correctly from fd3 without losing its previous state.
 This allows the function to alternate between different files without mixing their contents.
 
 ---
+
+## Bonus Input Validation
+
+In the bonus version, the function also ensures that the file descriptor does not exceed the maximum allowed limit (`MAX_FD`) to prevent out-of-bounds errors in the static array:
+
+```c
+if (fd < 0 || fd >= MAX_FD || BUFFER_SIZE <= 0)
+    return (NULL);
+```
+
+---

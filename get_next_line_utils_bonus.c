@@ -6,11 +6,11 @@
 /*   By: alesferr <alesferr@student.42sp.org.br>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/03 16:18:10 by alesferr          #+#    #+#             */
-/*   Updated: 2026/07/08 18:32:06 by alesferr         ###   ########.fr       */
+/*   Updated: 2026/07/08 18:47:32 by alesferr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "get_next_line.h"
+#include "get_next_line_bonus.h"
 
 size_t	ft_strlen(const char *s)
 {
