@@ -6,7 +6,7 @@
 /*   By: alesferr <alesferr@student.42sp.org.br>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/03 16:18:10 by alesferr          #+#    #+#             */
-/*   Updated: 2026/07/08 18:47:32 by alesferr         ###   ########.fr       */
+/*   Updated: 2026/07/10 15:55:16 by alesferr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,19 +24,16 @@ size_t	ft_strlen(const char *s)
 
 char	*ft_strchr(const char *s, int c)
 {
-	size_t	i;
-
 	if (!s)
 		return (NULL);
-	i = 0;
-	while (s[i])
+	while (*s)
 	{
-		if (s[i] == (char)c)
-			return ((char *)&s[i]);
-		i++;
+		if (*s == (char)c)
+			return ((char *)s);
+		s++;
 	}
 	if ((char)c == '\0')
-		return ((char *)&s[i]);
+		return ((char *)s);
 	return (NULL);
 }
 
