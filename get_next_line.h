@@ -6,11 +6,11 @@
 /*   By: alesferr <alesferr@student.42sp.org.br>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/03 16:04:38 by alesferr          #+#    #+#             */
-/*   Updated: 2026/09/02 14:31:36 by alesferr         ###   ########.fr       */
+/*   Updated: 2026/09/02 14:49:24 by alesferr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef GET_NEXT_LINE_h
+#ifndef GET_NEXT_LINE_H
 # define GET_NEXT_LINE_H
 
 # ifndef BUFFER_SIZE
